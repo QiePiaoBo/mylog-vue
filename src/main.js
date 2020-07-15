@@ -3,12 +3,9 @@
 import Vue from 'vue'
 import App from './App'
 import router from './router'
-import axios from 'axios'
-import VueAxios from 'vue-axios'
+import api from './api'
 
-Vue.prototype.$ajax = axios;
-
-Vue.use(VueAxios, axios)
+Vue.prototype.$api = api;
 
 Vue.config.productionTip = false
 

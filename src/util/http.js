@@ -1,113 +1,109 @@
-import axios from 'axios' //引用axios
-import {Promise} from 'es6-promise'   //引入Promise
-import router from 'router'
+/**
+ * axios封装
+ * 请求拦截、响应拦截、错误统一处理
+ */
+import axios from 'axios';
+import router from '../router';
+// import store from '../store/index';
+// import { Toast } from 'vant';
 
-// axios 配置
-axios.defaults.timeout = 5000;  //设置超时时间
-axios.defaults.baseURL = 'http://localhost:4000/api/v1/'; //这是调用数据接口
+/**
+ * 提示函数
+ * 禁止点击蒙层、显示一秒后关闭
+ */
+// const tip = msg => {
+//   Toast({
+//     message: msg,
+//     duration: 1000,
+//     forbidClick: true
+//   });
+// }
 
-// http request 拦截器（所有发送的请求都要从这儿过一次），通过这个，我们就可以把token传到后台，我这里是使用sessionStorage来存储token等权限信息和用户信息，若要使用cookie可以自己封装一个函数并import便可使用
-axios.interceptors.request.use(
-  config => {
-    const token = sessionStorage.getItem("token"); //获取存储在本地的token
-    config.data = JSON.stringify(config.data);
-    config.headers = {
-      'Content-Type': 'application/json' //设置跨域头部,虽然很多浏览器默认都是使用json传数据，但咱要考虑IE浏览器。
-    };
-    if (token) {
-      config.headers.Authorization = "Token " + token; //携带权限参数
+/**
+ * 跳转登录页
+ * 携带当前页面路由，以期在登录页面完成登录后返回当前页面
+ */
+const toLogin = () => {
+  router.replace({
+    path: '/login',
+    query: {
+      redirect: router.currentRoute.fullPath
     }
-    return config;
-  },
-  err => {
-    return Promise.reject(err);
-  }
-);
-// http response 拦截器（所有接收到的请求都要从这儿过一次）
-axios.interceptors.response.use(
-  response => {
-//response.status===401是我和后台约定的权限丢失或者权限不够返回的状态码，这个可以自己和后台约定，约定返回某个自定义字段也是可以的
-    if (response.status === 401) {
-      router.push({ //push后面是一个参数对象，可以携带很多参数，具体可以去vue-router上查看，例如query字段表示携带的参数
-        path: '/login'
-      })
-    }
-    return response;
-  },
-  error => {
-    return Promise.reject(error.response.data)
   });
-
-export default axios;
-
-/**
- * fetch 请求方法
- * @param url
- * @param params
- * @returns {Promise}
- */
-export function fetch(url, params = {}) {
-
-  return new Promise((resolve, reject) => {
-    axios.get(url, {
-      params: params
-    })
-      .then(response => {
-        resolve(response.data);
-      })
-      .catch(err => {
-        reject(err)
-      })
-  })
 }
 
 /**
- * post 请求方法
- * @param url
- * @param data
- * @returns {Promise}
+ * 请求失败后的错误统一处理
+ * @param {Number} status 请求失败的状态码
+ * @param other
  */
-export function post(url, data = {}) {
-  return new Promise((resolve, reject) => {
-    axios.post(url, data)
-      .then(response => {
-        resolve(response.data);
-      }, err => {
-        reject(err);
-      })
-  })
-}
+// const errorHandle = (status, other) => {
+//   // 状态码判断
+//   switch (status) {
+//     // 401: 未登录状态，跳转登录页
+//     case 401:
+//       toLogin();
+//       break;
+//     // 403 token过期
+//     // 清除token并跳转登录页
+//     case 403:
+//       tip('登录过期，请重新登录');
+//       localStorage.removeItem('token');
+//       store.commit('loginSuccess', null);
+//       setTimeout(() => {
+//         toLogin();
+//       }, 1000);
+//       break;
+//     // 404请求不存在
+//     case 404:
+//       tip('请求的资源不存在');
+//       break;
+//     default:
+//       console.log(other);
+//   }}
 
+// 创建axios实例
+var instance = axios.create({    timeout: 1000 * 12});
+// 设置post请求头
+instance.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 /**
- * patch 方法封装
- * @param url
- * @param data
- * @returns {Promise}
+ * 请求拦截器
+ * 每次请求前，如果存在token则在请求头中携带token
  */
-export function patch(url, data = {}) {
-  return new Promise((resolve, reject) => {
-    axios.patch(url, data)
-      .then(response => {
-        resolve(response.data);
-      }, err => {
-        reject(err);
-      })
-  })
-}
+// instance.interceptors.request.use(
+//   config => {
+//     // 登录流程控制中，根据本地是否存在token判断用户的登录情况
+//     // 但是即使token存在，也有可能token是过期的，所以在每次的请求头中携带token
+//     // 后台根据携带的token判断用户的登录情况，并返回给我们对应的状态码
+//     // 而后我们可以在响应拦截器中，根据状态码进行一些统一的操作。
+//     const token = store.state.token;
+//     token && (config.headers.Authorization = token);
+//     return config;
+//   },
+//   error => Promise.error(error))
 
-/**
- * put 方法封装
- * @param url
- * @param data
- * @returns {Promise}
- */
-export function put(url, data = {}) {
-  return new Promise((resolve, reject) => {
-    axios.put(url, data)
-      .then(response => {
-        resolve(response.data);
-      }, err => {
-        reject(err);
-      })
-  })
-}
+// 响应拦截器
+// instance.interceptors.response.use(
+//   // 请求成功
+//   res => res.status === 200 ? Promise.resolve(res) : Promise.reject(res),
+//   // 请求失败
+//   error => {
+//     const { response } = error;
+//     if (response) {
+//       // 请求已发出，但是不在2xx的范围
+//       errorHandle(response.status, response.data.message);
+//       return Promise.reject(response);
+//     } else {
+//       // 处理断网的情况
+//       // eg:请求超时或断网时，更新state的network状态
+//       // network状态在app.vue中控制着一个全局的断网提示组件的显示隐藏
+//       // 关于断网组件中的刷新重新获取数据，会在断网组件中说明
+//       if (!window.navigator.onLine) {
+//         store.commit('changeNetwork', false);
+//       } else {
+//         return Promise.reject(error);
+//       }
+//     }
+//   });
+
+export default instance;

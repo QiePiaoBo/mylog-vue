@@ -16,7 +16,7 @@
       }
     },
     mounted() {
-      this.$ajax.get("/api/blog/getUser")
+      this.$api.user.getUser()
         .then(response => (this.info = response))
         .catch(function (error) {
           console.log(error)
