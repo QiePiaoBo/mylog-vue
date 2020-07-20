@@ -8,14 +8,14 @@ export default new Router({
   mode: "history",
   routes: [
     {
-      path: '/',
+      path: '/helloWorld',
       name: 'HelloWorld',
       component: HelloWorld
     },
     {
-      path: '/index2',
-      name: '测试跳转',
-      component: (resolve) => require(['@/page/index'], resolve),
+      path: '/',
+      name: '用户登录',
+      component: (resolve) => require(['@/page/login'], resolve),
     }
   ]
 })
